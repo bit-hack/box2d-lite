@@ -4,40 +4,42 @@
 * Permission to use, copy, modify, distribute and sell this software
 * and its documentation for any purpose is hereby granted without fee,
 * provided that the above copyright notice appear in all copies.
-* Erin Catto makes no representations about the suitability 
-* of this software for any purpose.  
+* Erin Catto makes no representations about the suitability
+* of this software for any purpose.
 * It is provided "as is" without express or implied warranty.
 */
 
-#ifndef BODY_H
-#define BODY_H
+#pragma once
 
 #include "MathUtils.h"
 
+namespace b2dl {
+
 struct Body
 {
-	Body();
-	void Set(const Vec2& w, float m);
+  Body();
 
-	void AddForce(const Vec2& f)
-	{
-		force += f;
-	}
+  void Set(const Vec2& width, float mass);
 
-	Vec2 position;
-	float rotation;
+  void AddForce(const Vec2& f)
+  {
+    force += f;
+  }
 
-	Vec2 velocity;
-	float angularVelocity;
+  Vec2 position;
+  float rotation;
 
-	Vec2 force;
-	float torque;
+  Vec2 velocity;
+  float angularVelocity;
 
-	Vec2 width;
+  Vec2 force;
+  float torque;
 
-	float friction;
-	float mass, invMass;
-	float I, invI;
+  Vec2 width;
+
+  float friction;
+  float mass, invMass;
+  float I, invI;
 };
 
-#endif
+}  // namespace b2dl
