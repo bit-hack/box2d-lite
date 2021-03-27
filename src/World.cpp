@@ -9,9 +9,9 @@
 * It is provided "as is" without express or implied warranty.
 */
 
-#include "box2d-lite/World.h"
-#include "box2d-lite/Body.h"
-#include "box2d-lite/Joint.h"
+#include "World.h"
+#include "Body.h"
+#include "Joint.h"
 
 using namespace b2dl;
 

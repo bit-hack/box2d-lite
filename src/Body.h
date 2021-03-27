@@ -21,10 +21,7 @@ struct Body
 
   void Set(const Vec2& width, float mass);
 
-  void AddForce(const Vec2& f)
-  {
-    force += f;
-  }
+  void AddForce(const Vec2& f);
 
   Vec2 position;
   float rotation;

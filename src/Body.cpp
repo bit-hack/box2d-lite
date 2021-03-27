@@ -9,7 +9,7 @@
 * It is provided "as is" without express or implied warranty.
 */
 
-#include "box2d-lite/Body.h"
+#include "Body.h"
 
 using namespace b2dl;
 
@@ -54,4 +54,9 @@ void Body::Set(const Vec2& w, float m)
     I = FLT_MAX;
     invI = 0.0f;
   }
+}
+
+void Body::AddForce(const Vec2& f)
+{
+  force += f;
 }
