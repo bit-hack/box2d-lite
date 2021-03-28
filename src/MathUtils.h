@@ -22,12 +22,9 @@ const float k_pi = 3.14159265358979323846264f;
 
 struct Vec2
 {
-  Vec2() {}
-  Vec2(float x, float y) : x(x), y(y) {}
-
   void Set(float x_, float y_) { x = x_; y = y_; }
 
-  Vec2 operator -() const { return Vec2(-x, -y); }
+  Vec2 operator -() const { return Vec2{ -x, -y }; }
 
   void operator += (const Vec2& v)
   {
@@ -67,7 +64,7 @@ struct Mat22
 
   Mat22 Transpose() const
   {
-    return Mat22(Vec2(col1.x, col2.x), Vec2(col1.y, col2.y));
+    return Mat22(Vec2{ col1.x, col2.x }, Vec2{ col1.y, col2.y });
   }
 
   Mat22 Invert() const
@@ -97,37 +94,37 @@ inline float Cross(const Vec2& a, const Vec2& b)
 
 inline Vec2 Cross(const Vec2& a, float s)
 {
-  return Vec2(s * a.y, -s * a.x);
+  return Vec2{ s * a.y, -s * a.x };
 }
 
 inline Vec2 Cross(float s, const Vec2& a)
 {
-  return Vec2(-s * a.y, s * a.x);
+  return Vec2{ -s * a.y, s * a.x };
 }
 
 inline Vec2 operator * (const Mat22& A, const Vec2& v)
 {
-  return Vec2(A.col1.x * v.x + A.col2.x * v.y, A.col1.y * v.x + A.col2.y * v.y);
+  return Vec2{ A.col1.x * v.x + A.col2.x * v.y, A.col1.y * v.x + A.col2.y * v.y };
 }
 
 inline Vec2 operator + (const Vec2& a, const Vec2& b)
 {
-  return Vec2(a.x + b.x, a.y + b.y);
+  return Vec2{ a.x + b.x, a.y + b.y };
 }
 
 inline Vec2 operator - (const Vec2& a, const Vec2& b)
 {
-  return Vec2(a.x - b.x, a.y - b.y);
+  return Vec2{a.x - b.x, a.y - b.y};
 }
 
 inline Vec2 operator * (float s, const Vec2& v)
 {
-  return Vec2(s * v.x, s * v.y);
+  return Vec2{ s * v.x, s * v.y };
 }
 
 inline Mat22 operator + (const Mat22& A, const Mat22& B)
 {
-  return Mat22(A.col1 + B.col1, A.col2 + B.col2);
+  return Mat22{ A.col1 + B.col1, A.col2 + B.col2 };
 }
 
 inline Mat22 operator * (const Mat22& A, const Mat22& B)
@@ -142,7 +139,7 @@ inline float Abs(float a)
 
 inline Vec2 Abs(const Vec2& a)
 {
-  return Vec2(fabsf(a.x), fabsf(a.y));
+  return Vec2{ fabsf(a.x), fabsf(a.y) };
 }
 
 inline Mat22 Abs(const Mat22& A)

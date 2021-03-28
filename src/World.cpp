@@ -29,6 +29,11 @@ bool World::positionCorrection = true;
 void World::Add(Body* body)
 {
   bodies.push_back(body);
+
+  // insert into the bvh
+  aabb_t aabb;
+  body->GetAABB(aabb);
+  body->bvh_index = bvh.insert(aabb, body);
 }
 
 void World::Add(Joint* joint)
@@ -41,6 +46,7 @@ void World::Clear()
   bodies.clear();
   joints.clear();
   arbiters.clear();
+  bvh.clear();
 }
 
 void World::NarrowPhase(Body* bi, Body *bj) {
@@ -73,11 +79,27 @@ void World::NarrowPhase(Body* bi, Body *bj) {
 
 void World::BroadPhase()
 {
-  // O(n^2) broad-phase
+  bvh_vector_t overlaps;
   for (size_t i = 0; i < bodies.size(); ++i)
   {
     Body* bi = bodies[i];
 
+#if 0
+    // note: this does not remove old arbiters which we should do
+
+    overlaps.clear();
+    if (bvh.find_overlaps(bi->bvh_index, overlaps)) {
+
+      for (bvh_index_t j : overlaps) {
+        Body *bj = (Body*)bvh.user_data(j);
+
+        if (bi != bj) {
+          NarrowPhase(bi, bj);
+        }
+      }
+    }
+#else
+    // O(n^2) broad-phase
     for (size_t j = i + 1; j < bodies.size(); ++j)
     {
       Body* bj = bodies[j];
@@ -85,6 +107,7 @@ void World::BroadPhase()
       // check for a collision between these two
       NarrowPhase(bi, bj);
     }
+#endif
   }
 }
 
@@ -142,5 +165,11 @@ void World::Step(float dt)
 
     b->force.Set(0.0f, 0.0f);
     b->torque = 0.0f;
+
+    // move in the aabb
+    assert(b->bvh_index != bvh_invalid_index);
+    aabb_t aabb;
+    b->GetAABB(aabb);
+    bvh.move(b->bvh_index, aabb);
   }
 }

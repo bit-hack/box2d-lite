@@ -36,7 +36,7 @@ namespace
 
   float timeStep = 1.0f / 60.0f;
   int iterations = 10;
-  b2dl::Vec2 gravity(0.0f, -10.0f);
+  b2dl::Vec2 gravity{ 0.0f, -10.0f };
 
   int numBodies = 0;
   int numJoints = 0;
@@ -49,7 +49,9 @@ namespace
   float pan_y = 8.0f;
 
   b2dl::World world(gravity, iterations);
-}
+
+  bool drawBVH = false;
+}  // namespace {}
 
 static void glfwErrorCallback(int error, const char* description)
 {
@@ -67,6 +69,28 @@ static void DrawText(int x, int y, const char* string)
   ImGui::End();
 }
 
+static void DrawAABB(const b2dl::aabb_t &aabb) {
+  glColor3f(0.2f, 0.3f, 0.4f);
+  glBegin(GL_LINE_LOOP);
+  glVertex2f(aabb.min.x, aabb.min.y);
+  glVertex2f(aabb.max.x, aabb.min.y);
+  glVertex2f(aabb.max.x, aabb.max.y);
+  glVertex2f(aabb.min.x, aabb.max.y);
+  glEnd();
+}
+
+static void DrawBVH(const b2dl::bvh_t &bvh, b2dl::bvh_index_t index) {
+  const auto &node = bvh.get(index);
+  DrawAABB(node.aabb);
+  if (node.is_leaf()) {
+    return;
+  }
+  else {
+    DrawBVH(bvh, node.child[0]);
+    DrawBVH(bvh, node.child[1]);
+  }
+}
+
 static void DrawBody(b2dl::Body* body)
 {
   using namespace b2dl;
@@ -75,10 +99,10 @@ static void DrawBody(b2dl::Body* body)
   Vec2 x = body->position;
   Vec2 h = 0.5f * body->width;
 
-  Vec2 v1 = x + R * Vec2(-h.x, -h.y);
-  Vec2 v2 = x + R * Vec2(h.x, -h.y);
-  Vec2 v3 = x + R * Vec2(h.x, h.y);
-  Vec2 v4 = x + R * Vec2(-h.x, h.y);
+  Vec2 v1 = x + R * Vec2{ -h.x, -h.y };
+  Vec2 v2 = x + R * Vec2{ h.x, -h.y };
+  Vec2 v3 = x + R * Vec2{ h.x, h.y };
+  Vec2 v4 = x + R * Vec2{ -h.x, h.y };
 
   if (body == bomb)
     glColor3f(0.4f, 0.9f, 0.4f);
@@ -125,7 +149,7 @@ static void LaunchBomb()
   if (!bomb)
   {
     bomb = bodies + numBodies;
-    bomb->Set(Vec2(1.0f, 1.0f), 50.0f);
+    bomb->Set(Vec2{ 1.0f, 1.0f }, 50.0f);
     bomb->friction = 0.2f;
     world.Add(bomb);
     ++numBodies;
@@ -137,17 +161,37 @@ static void LaunchBomb()
   bomb->angularVelocity = Random(-20.0f, 20.0f);
 }
 
+static void DrawArbiters() {
+  using namespace b2dl;
+
+  glPointSize(4.0f);
+  glColor3f(1.0f, 0.0f, 0.0f);
+  glBegin(GL_POINTS);
+  std::map<b2dl::ArbiterKey, b2dl::Arbiter>::const_iterator iter;
+  for (iter = world.arbiters.begin(); iter != world.arbiters.end(); ++iter)
+  {
+    const Arbiter& arbiter = iter->second;
+    for (int i = 0; i < arbiter.numContacts; ++i)
+    {
+      Vec2 p = arbiter.contacts[i].position;
+      glVertex2f(p.x, p.y);
+    }
+  }
+  glEnd();
+  glPointSize(1.0f);
+}
+
 // Single box
 static void Demo1(b2dl::Body* b, b2dl::Joint* j)
 {
   using namespace b2dl;
 
-  b->Set(Vec2(100.0f, 20.0f), FLT_MAX);
+  b->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
   b->position.Set(0.0f, -0.5f * b->width.y);
   world.Add(b);
   ++b; ++numBodies;
 
-  b->Set(Vec2(1.0f, 1.0f), 200.0f);
+  b->Set(Vec2{ 1.0f, 1.0f }, 200.0f);
   b->position.Set(0.0f, 4.0f);
   world.Add(b);
   ++b; ++numBodies;
@@ -159,14 +203,14 @@ static void Demo2(b2dl::Body* b, b2dl::Joint* j)
   using namespace b2dl;
 
   b2dl::Body* b1 = b + 0;
-  b1->Set(Vec2(100.0f, 20.0f), FLT_MAX);
+  b1->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
   b1->friction = 0.2f;
   b1->position.Set(0.0f, -0.5f * b1->width.y);
   b1->rotation = 0.0f;
   world.Add(b1);
 
   b2dl::Body* b2 = b + 1;
-  b2->Set(Vec2(1.0f, 1.0f), 100.0f);
+  b2->Set(Vec2{ 1.0f, 1.0f }, 100.0f);
   b2->friction = 0.2f;
   b2->position.Set(9.0f, 11.0f);
   b2->rotation = 0.0f;
@@ -174,7 +218,7 @@ static void Demo2(b2dl::Body* b, b2dl::Joint* j)
 
   numBodies += 2;
 
-  j->Set(b1, b2, Vec2(0.0f, 11.0f));
+  j->Set(b1, b2, Vec2{ 0.0f, 11.0f });
   world.Add(j);
 
   numJoints += 1;
@@ -185,34 +229,34 @@ static void Demo3(b2dl::Body* b, b2dl::Joint* j)
 {
   using namespace b2dl;
 
-  b->Set(Vec2(100.0f, 20.0f), FLT_MAX);
+  b->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
   b->position.Set(0.0f, -0.5f * b->width.y);
   world.Add(b);
   ++b; ++numBodies;
 
-  b->Set(Vec2(13.0f, 0.25f), FLT_MAX);
+  b->Set(Vec2{ 13.0f, 0.25f }, FLT_MAX);
   b->position.Set(-2.0f, 11.0f);
   b->rotation = -0.25f;
   world.Add(b);
   ++b; ++numBodies;
 
-  b->Set(Vec2(0.25f, 1.0f), FLT_MAX);
+  b->Set(Vec2{ 0.25f, 1.0f }, FLT_MAX);
   b->position.Set(5.25f, 9.5f);
   world.Add(b);
   ++b; ++numBodies;
 
-  b->Set(Vec2(13.0f, 0.25f), FLT_MAX);
+  b->Set(Vec2{ 13.0f, 0.25f }, FLT_MAX);
   b->position.Set(2.0f, 7.0f);
   b->rotation = 0.25f;
   world.Add(b);
   ++b; ++numBodies;
 
-  b->Set(Vec2(0.25f, 1.0f), FLT_MAX);
+  b->Set(Vec2{ 0.25f, 1.0f }, FLT_MAX);
   b->position.Set(-5.25f, 5.5f);
   world.Add(b);
   ++b; ++numBodies;
 
-  b->Set(Vec2(13.0f, 0.25f), FLT_MAX);
+  b->Set(Vec2{ 13.0f, 0.25f }, FLT_MAX);
   b->position.Set(-2.0f, 3.0f);
   b->rotation = -0.25f;
   world.Add(b);
@@ -221,7 +265,7 @@ static void Demo3(b2dl::Body* b, b2dl::Joint* j)
   float friction[5] = { 0.75f, 0.5f, 0.35f, 0.1f, 0.0f };
   for (int i = 0; i < 5; ++i)
   {
-    b->Set(Vec2(0.5f, 0.5f), 25.0f);
+    b->Set(Vec2{ 0.5f, 0.5f }, 25.0f);
     b->friction = friction[i];
     b->position.Set(-7.5f + 2.0f * i, 14.0f);
     world.Add(b);
@@ -234,7 +278,7 @@ static void Demo4(b2dl::Body* b, b2dl::Joint* j)
 {
   using namespace b2dl;
 
-  b->Set(Vec2(100.0f, 20.0f), FLT_MAX);
+  b->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
   b->friction = 0.2f;
   b->position.Set(0.0f, -0.5f * b->width.y);
   b->rotation = 0.0f;
@@ -243,7 +287,7 @@ static void Demo4(b2dl::Body* b, b2dl::Joint* j)
 
   for (int i = 0; i < 10; ++i)
   {
-    b->Set(Vec2(1.0f, 1.0f), 1.0f);
+    b->Set(Vec2{ 1.0f, 1.0f }, 1.0f);
     b->friction = 0.2f;
     float x = Random(-0.1f, 0.1f);
     b->position.Set(x, 0.51f + 1.05f * i);
@@ -257,14 +301,14 @@ static void Demo5(b2dl::Body* b, b2dl::Joint* j)
 {
   using namespace b2dl;
 
-  b->Set(Vec2(100.0f, 20.0f), FLT_MAX);
+  b->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
   b->friction = 0.2f;
   b->position.Set(0.0f, -0.5f * b->width.y);
   b->rotation = 0.0f;
   world.Add(b);
   ++b; ++numBodies;
 
-  b2dl::Vec2 x(-6.0f, 0.75f);
+  b2dl::Vec2 x{ -6.0f, 0.75f };
   b2dl::Vec2 y;
 
   for (int i = 0; i < 12; ++i)
@@ -273,17 +317,17 @@ static void Demo5(b2dl::Body* b, b2dl::Joint* j)
 
     for (int j = i; j < 12; ++j)
     {
-      b->Set(b2dl::Vec2(1.0f, 1.0f), 10.0f);
+      b->Set(b2dl::Vec2{ 1.0f, 1.0f }, 10.0f);
       b->friction = 0.2f;
       b->position = y;
       world.Add(b);
       ++b; ++numBodies;
 
-      y += b2dl::Vec2(1.125f, 0.0f);
+      y += b2dl::Vec2{ 1.125f, 0.0f };
     }
 
     //x += Vec2(0.5625f, 1.125f);
-    x += b2dl::Vec2(0.5625f, 2.0f);
+    x += b2dl::Vec2{ 0.5625f, 2.0f };
   }
 }
 
@@ -293,33 +337,33 @@ static void Demo6(b2dl::Body* b, b2dl::Joint* j)
   using namespace b2dl;
 
   Body* b1 = b + 0;
-  b1->Set(Vec2(100.0f, 20.0f), FLT_MAX);
+  b1->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
   b1->position.Set(0.0f, -0.5f * b1->width.y);
   world.Add(b1);
 
   Body* b2 = b + 1;
-  b2->Set(Vec2(12.0f, 0.25f), 100.0f);
+  b2->Set(Vec2{ 12.0f, 0.25f }, 100.0f);
   b2->position.Set(0.0f, 1.0f);
   world.Add(b2);
 
   Body* b3 = b + 2;
-  b3->Set(Vec2(0.5f, 0.5f), 25.0f);
+  b3->Set(Vec2{ 0.5f, 0.5f }, 25.0f);
   b3->position.Set(-5.0f, 2.0f);
   world.Add(b3);
 
   Body* b4 = b + 3;
-  b4->Set(Vec2(0.5f, 0.5f), 25.0f);
+  b4->Set(Vec2{ 0.5f, 0.5f }, 25.0f);
   b4->position.Set(-5.5f, 2.0f);
   world.Add(b4);
 
   Body* b5 = b + 4;
-  b5->Set(Vec2(1.0f, 1.0f), 100.0f);
+  b5->Set(Vec2{ 1.0f, 1.0f }, 100.0f);
   b5->position.Set(5.5f, 15.0f);
   world.Add(b5);
 
   numBodies += 5;
 
-  j->Set(b1, b2, Vec2(0.0f, 1.0f));
+  j->Set(b1, b2, Vec2{ 0.0f, 1.0f });
   world.Add(j);
 
   numJoints += 1;
@@ -330,7 +374,7 @@ static void Demo7(b2dl::Body* b, b2dl::Joint* j)
 {
   using namespace b2dl;
 
-  b->Set(Vec2(100.0f, 20.0f), FLT_MAX);
+  b->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
   b->friction = 0.2f;
   b->position.Set(0.0f, -0.5f * b->width.y);
   b->rotation = 0.0f;
@@ -342,7 +386,7 @@ static void Demo7(b2dl::Body* b, b2dl::Joint* j)
 
   for (int i = 0; i < numPlanks; ++i)
   {
-    b->Set(Vec2(1.0f, 0.25f), mass);
+    b->Set(Vec2{ 1.0f, 0.25f }, mass);
     b->friction = 0.2f;
     b->position.Set(-8.5f + 1.25f * i, 5.0f);
     world.Add(b);
@@ -368,7 +412,7 @@ static void Demo7(b2dl::Body* b, b2dl::Joint* j)
 
   for (int i = 0; i < numPlanks; ++i)
   {
-    j->Set(bodies + i, bodies + i + 1, Vec2(-9.125f + 1.25f * i, 5.0f));
+    j->Set(bodies + i, bodies + i + 1, Vec2{ -9.125f + 1.25f * i, 5.0f });
     j->softness = softness;
     j->biasFactor = biasFactor;
 
@@ -376,7 +420,7 @@ static void Demo7(b2dl::Body* b, b2dl::Joint* j)
     ++j; ++numJoints;
   }
 
-  j->Set(bodies + numPlanks, bodies, Vec2(-9.125f + 1.25f * numPlanks, 5.0f));
+  j->Set(bodies + numPlanks, bodies, Vec2{ -9.125f + 1.25f * numPlanks, 5.0f });
   j->softness = softness;
   j->biasFactor = biasFactor;
   world.Add(j);
@@ -389,75 +433,75 @@ static void Demo8(b2dl::Body* b, b2dl::Joint* j)
   using namespace b2dl;
 
   Body* b1 = b;
-  b->Set(Vec2(100.0f, 20.0f), FLT_MAX);
+  b->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
   b->position.Set(0.0f, -0.5f * b->width.y);
   world.Add(b);
   ++b; ++numBodies;
 
-  b->Set(Vec2(12.0f, 0.5f), FLT_MAX);
+  b->Set(Vec2{ 12.0f, 0.5f }, FLT_MAX);
   b->position.Set(-1.5f, 10.0f);
   world.Add(b);
   ++b; ++numBodies;
 
   for (int i = 0; i < 10; ++i)
   {
-    b->Set(Vec2(0.2f, 2.0f), 10.0f);
+    b->Set(Vec2{ 0.2f, 2.0f }, 10.0f);
     b->position.Set(-6.0f + 1.0f * i, 11.125f);
     b->friction = 0.1f;
     world.Add(b);
     ++b; ++numBodies;
   }
 
-  b->Set(Vec2(14.0f, 0.5f), FLT_MAX);
+  b->Set(Vec2{ 14.0f, 0.5f }, FLT_MAX);
   b->position.Set(1.0f, 6.0f);
   b->rotation = 0.3f;
   world.Add(b);
   ++b; ++numBodies;
 
   Body* b2 = b;
-  b->Set(Vec2(0.5f, 3.0f), FLT_MAX);
+  b->Set(Vec2{ 0.5f, 3.0f }, FLT_MAX);
   b->position.Set(-7.0f, 4.0f);
   world.Add(b);
   ++b; ++numBodies;
 
   Body* b3 = b;
-  b->Set(Vec2(12.0f, 0.25f), 20.0f);
+  b->Set(Vec2{ 12.0f, 0.25f }, 20.0f);
   b->position.Set(-0.9f, 1.0f);
   world.Add(b);
   ++b; ++numBodies;
 
-  j->Set(b1, b3, Vec2(-2.0f, 1.0f));
+  j->Set(b1, b3, Vec2{ -2.0f, 1.0f });
   world.Add(j);
   ++j; ++numJoints;
 
   Body* b4 = b;
-  b->Set(Vec2(0.5f, 0.5f), 10.0f);
+  b->Set(Vec2{ 0.5f, 0.5f }, 10.0f);
   b->position.Set(-10.0f, 15.0f);
   world.Add(b);
   ++b; ++numBodies;
 
-  j->Set(b2, b4, Vec2(-7.0f, 15.0f));
+  j->Set(b2, b4, Vec2{ -7.0f, 15.0f });
   world.Add(j);
   ++j; ++numJoints;
 
   Body* b5 = b;
-  b->Set(Vec2(2.0f, 2.0f), 20.0f);
+  b->Set(Vec2{ 2.0f, 2.0f }, 20.0f);
   b->position.Set(6.0f, 2.5f);
   b->friction = 0.1f;
   world.Add(b);
   ++b; ++numBodies;
 
-  j->Set(b1, b5, Vec2(6.0f, 2.6f));
+  j->Set(b1, b5, Vec2{ 6.0f, 2.6f });
   world.Add(j);
   ++j; ++numJoints;
 
   Body* b6 = b;
-  b->Set(Vec2(2.0f, 0.2f), 10.0f);
+  b->Set(Vec2{ 2.0f, 0.2f }, 10.0f);
   b->position.Set(6.0f, 3.6f);
   world.Add(b);
   ++b; ++numBodies;
 
-  j->Set(b5, b6, Vec2(7.0f, 3.5f));
+  j->Set(b5, b6, Vec2{ 7.0f, 3.5f });
   world.Add(j);
   ++j; ++numJoints;
 }
@@ -467,7 +511,7 @@ static void Demo9(b2dl::Body* b, b2dl::Joint* j)
 {
   using namespace b2dl;
 
-  b->Set(Vec2(100.0f, 20.0f), FLT_MAX);
+  b->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
   b->friction = 0.2f;
   b->position.Set(0.0f, -0.5f * b->width.y);
   b->rotation = 0.0f;
@@ -500,14 +544,14 @@ static void Demo9(b2dl::Body* b, b2dl::Joint* j)
 
   for (int i = 0; i < 15; ++i)
   {
-    Vec2 x(0.5f + i, y);
-    b->Set(Vec2(0.75f, 0.25f), mass);
+    Vec2 x{ 0.5f + i, y };
+    b->Set(Vec2{ 0.75f, 0.25f }, mass);
     b->friction = 0.2f;
     b->position = x;
     b->rotation = 0.0f;
     world.Add(b);
 
-    j->Set(b1, b, Vec2(float(i), y));
+    j->Set(b1, b, Vec2{ float(i), y });
     j->softness = softness;
     j->biasFactor = biasFactor;
     world.Add(j);
@@ -581,6 +625,10 @@ static void Keyboard(GLFWwindow* window, int key, int scancode, int action, int 
 
   case GLFW_KEY_W:
     World::warmStarting = !World::warmStarting;
+    break;
+
+  case GLFW_KEY_D:
+    drawBVH = !drawBVH;
     break;
 
   case GLFW_KEY_SPACE:
@@ -692,20 +740,27 @@ int main(int, char**)
     DrawText(5, 5, demoStrings[demoIndex]);
     DrawText(5, 35, "Keys: 1-9 Demos, Space to Launch the Bomb");
 
-    char buffer[64];
-    sprintf(buffer, "(A)ccumulation %s", World::accumulateImpulses ? "ON" : "OFF");
-    DrawText(5, 65, buffer);
+    std::array<char, 128> buffer;
+    sprintf(buffer.data(), "(A)ccumulation %s", World::accumulateImpulses ? "ON" : "OFF");
+    DrawText(5, 65, buffer.data());
 
-    sprintf(buffer, "(P)osition Correction %s", World::positionCorrection ? "ON" : "OFF");
-    DrawText(5, 95, buffer);
+    sprintf(buffer.data(), "(P)osition Correction %s", World::positionCorrection ? "ON" : "OFF");
+    DrawText(5, 95, buffer.data());
 
-    sprintf(buffer, "(W)arm Starting %s", World::warmStarting ? "ON" : "OFF");
-    DrawText(5, 125, buffer);
+    sprintf(buffer.data(), "(W)arm Starting %s", World::warmStarting ? "ON" : "OFF");
+    DrawText(5, 125, buffer.data());
+
+    sprintf(buffer.data(), "(D)raw BVH %s", drawBVH ? "ON" : "OFF");
+    DrawText(5, 155, buffer.data());
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     world.Step(timeStep);
+
+    if (drawBVH) {
+      DrawBVH(world.bvh, world.bvh.root_index());
+    }
 
     for (int i = 0; i < numBodies; ++i)
       DrawBody(bodies + i);
@@ -713,21 +768,7 @@ int main(int, char**)
     for (int i = 0; i < numJoints; ++i)
       DrawJoint(joints + i);
 
-    glPointSize(4.0f);
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glBegin(GL_POINTS);
-    std::map<b2dl::ArbiterKey, b2dl::Arbiter>::const_iterator iter;
-    for (iter = world.arbiters.begin(); iter != world.arbiters.end(); ++iter)
-    {
-      const Arbiter& arbiter = iter->second;
-      for (int i = 0; i < arbiter.numContacts; ++i)
-      {
-        Vec2 p = arbiter.contacts[i].position;
-        glVertex2f(p.x, p.y);
-      }
-    }
-    glEnd();
-    glPointSize(1.0f);
+    DrawArbiters();
 
     ImGui::Render();
     ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());

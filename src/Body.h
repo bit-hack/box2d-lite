@@ -12,6 +12,8 @@
 #pragma once
 
 #include "MathUtils.h"
+#include "AABB.h"
+#include "BVH.h"
 
 namespace b2dl {
 
@@ -22,6 +24,8 @@ struct Body
   void Set(const Vec2& width, float mass);
 
   void AddForce(const Vec2& f);
+
+  void GetAABB(aabb_t &out) const;
 
   Vec2 position;
   float rotation;
@@ -37,6 +41,8 @@ struct Body
   float friction;
   float mass, invMass;
   float I, invI;
+
+  bvh_index_t bvh_index;
 };
 
 }  // namespace b2dl

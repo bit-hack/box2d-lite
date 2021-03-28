@@ -13,8 +13,10 @@
 
 #include <vector>
 #include <map>
+
 #include "MathUtils.h"
 #include "Arbiter.h"
+#include "BVH.h"
 
 namespace b2dl {
 
@@ -23,7 +25,11 @@ struct Joint;
 
 struct World
 {
-  World(Vec2 gravity, int iterations) : gravity(gravity), iterations(iterations) {}
+  World(Vec2 gravity, int iterations)
+    : gravity(gravity)
+    , iterations(iterations) {
+    bvh.growth = 0.2f;
+  }
 
   void Add(Body* body);
   void Add(Joint* joint);
@@ -41,6 +47,8 @@ struct World
 
   Vec2 gravity;
   int iterations;
+
+  bvh_t bvh;
 
   static bool accumulateImpulses;
   static bool warmStarting;
