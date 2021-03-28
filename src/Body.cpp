@@ -66,6 +66,8 @@ void Body::AddForce(const Vec2& f)
 
 void Body::GetAABB(aabb_t &out) const
 {
+  // we just need to find the maximum extent as its symetric around each axis
+
   const float c = std::abs(cosf(rotation));
   const float s = std::abs(sinf(rotation));
 

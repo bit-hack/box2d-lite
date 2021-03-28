@@ -1,10 +1,10 @@
 #include <assert.h>
 
 #include "bvh.h"
-#include "small_vector.h"
+#include "SmallVector.h"
 
 // enable to validate the tree after every operation
-#define VALIDATE 1
+#define VALIDATE 0
 
 namespace {
 // fixed size binary heap implementation
