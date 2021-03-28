@@ -167,13 +167,6 @@ inline float Clamp(float a, float low, float high)
   return Max(low, Min(a, high));
 }
 
-template<typename T> inline void Swap(T& a, T& b)
-{
-  T tmp = a;
-  a = b;
-  b = tmp;
-}
-
 // Random number in range [-1,1]
 inline float Random()
 {

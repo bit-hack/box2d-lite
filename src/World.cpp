@@ -52,7 +52,7 @@ void World::Clear()
 void World::NarrowPhase(Body* bi, Body *bj) {
 
   // both are static objects
-  if (bi->invMass == 0.0f && bj->invMass == 0.0f)
+  if (bi->IsStatic() && bj->IsStatic())
     return;
 
   Arbiter newArb(bi, bj);
@@ -84,7 +84,7 @@ void World::BroadPhase()
   {
     Body* bi = bodies[i];
 
-#if 0
+#if 1
     // note: this does not remove old arbiters which we should do
 
     overlaps.clear();

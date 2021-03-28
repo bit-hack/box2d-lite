@@ -27,12 +27,12 @@
 
 namespace
 {
-  GLFWwindow* mainWindow = NULL;
+  GLFWwindow* mainWindow = nullptr;
 
-  b2dl::Body bodies[200];
-  b2dl::Joint joints[100];
+  std::array<b2dl::Body, 200> bodies;
+  std::array<b2dl::Joint, 100> joints;
 
-  b2dl::Body* bomb = NULL;
+  b2dl::Body* bomb = nullptr;
 
   float timeStep = 1.0f / 60.0f;
   int iterations = 10;
@@ -63,7 +63,7 @@ static void DrawText(int x, int y, const char* string)
   ImVec2 p;
   p.x = float(x);
   p.y = float(y);
-  ImGui::Begin("Overlay", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
+  ImGui::Begin("Overlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
   ImGui::SetCursorPos(p);
   ImGui::TextColored(ImColor(230, 153, 153, 255), "%s", string);
   ImGui::End();
@@ -148,7 +148,7 @@ static void LaunchBomb()
 
   if (!bomb)
   {
-    bomb = bodies + numBodies;
+    bomb = &bodies[numBodies];
     bomb->Set(Vec2{ 1.0f, 1.0f }, 50.0f);
     bomb->friction = 0.2f;
     world.Add(bomb);
@@ -412,7 +412,7 @@ static void Demo7(b2dl::Body* b, b2dl::Joint* j)
 
   for (int i = 0; i < numPlanks; ++i)
   {
-    j->Set(bodies + i, bodies + i + 1, Vec2{ -9.125f + 1.25f * i, 5.0f });
+    j->Set(&bodies[i], &bodies[i + 1], Vec2{ -9.125f + 1.25f * i, 5.0f });
     j->softness = softness;
     j->biasFactor = biasFactor;
 
@@ -420,7 +420,7 @@ static void Demo7(b2dl::Body* b, b2dl::Joint* j)
     ++j; ++numJoints;
   }
 
-  j->Set(bodies + numPlanks, bodies, Vec2{ -9.125f + 1.25f * numPlanks, 5.0f });
+  j->Set(&bodies[numPlanks], &bodies[0], Vec2{ -9.125f + 1.25f * numPlanks, 5.0f });
   j->softness = softness;
   j->biasFactor = biasFactor;
   world.Add(j);
@@ -581,10 +581,10 @@ static void InitDemo(int index)
   world.Clear();
   numBodies = 0;
   numJoints = 0;
-  bomb = NULL;
+  bomb = nullptr;
 
   demoIndex = index;
-  demos[index](bodies, joints);
+  demos[index](bodies.data(), joints.data());
 }
 
 static void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -671,8 +671,8 @@ int main(int, char**)
     return -1;
   }
 
-  mainWindow = glfwCreateWindow(width, height, "box2d-lite", NULL, NULL);
-  if (mainWindow == NULL)
+  mainWindow = glfwCreateWindow(width, height, "box2d-lite", nullptr, nullptr);
+  if (mainWindow == nullptr)
   {
     fprintf(stderr, "Failed to open GLFW mainWindow.\n");
     glfwTerminate();
@@ -734,7 +734,7 @@ int main(int, char**)
 
     // Globally position text
     ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f));
-    ImGui::Begin("Overlay", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
+    ImGui::Begin("Overlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
     ImGui::End();
 
     DrawText(5, 5, demoStrings[demoIndex]);
@@ -763,10 +763,10 @@ int main(int, char**)
     }
 
     for (int i = 0; i < numBodies; ++i)
-      DrawBody(bodies + i);
+      DrawBody(&bodies[i]);
 
     for (int i = 0; i < numJoints; ++i)
-      DrawJoint(joints + i);
+      DrawJoint(&joints[i]);
 
     DrawArbiters();
 

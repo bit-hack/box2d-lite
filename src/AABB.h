@@ -6,15 +6,13 @@
 
 namespace b2dl {
 
-using float2 = Vec2;
-
 struct aabb_t {
 
   // make an aabb enclosing points a and b
-  static aabb_t make(const float2 &a, const float2 &b) {
+  static aabb_t make(const Vec2 &a, const Vec2 &b) {
     return aabb_t{
-      float2{std::min(a.x, b.x), std::min(a.y, b.y)},
-      float2{std::max(a.x, b.x), std::max(a.y, b.y)}
+      Vec2{std::min(a.x, b.x), std::min(a.y, b.y)},
+      Vec2{std::max(a.x, b.x), std::max(a.y, b.y)}
     };
   }
 
@@ -69,12 +67,12 @@ struct aabb_t {
   }
 
   // evaluate if point a is contained in this aabb
-  bool contains(const float2 &a) const {
+  bool contains(const Vec2 &a) const {
     return a.x >= min.x && a.x <= max.x && a.y >= min.y && a.y <= max.y;
   }
 
   // aabb minimum and maximum coordinates
-  float2 min, max;
+  Vec2 min, max;
 };
 
 }  // b2dl

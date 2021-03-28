@@ -64,18 +64,18 @@ void Body::AddForce(const Vec2& f)
   force += f;
 }
 
-void Body::GetAABB(aabb_t &out) const {
-  const Mat22 R(rotation);
-  const Vec2 x = position;
+void Body::GetAABB(aabb_t &out) const
+{
+  const float c = std::abs(cosf(rotation));
+  const float s = std::abs(sinf(rotation));
+
   const Vec2 h = .5f * width;
 
-  const Vec2 v1 = x + R * Vec2{ -h.x, -h.y };
-  const Vec2 v2 = x + R * Vec2{ h.x, -h.y };
-  const Vec2 v3 = x + R * Vec2{ h.x, h.y };
-  const Vec2 v4 = x + R * Vec2{ -h.x, h.y };
+  const float mx = c * h.x + s * h.y;
+  const float my = s * h.x + c * h.y;
 
-  out.min.x = std::min({v1.x, v2.x, v3.x, v4.x});
-  out.min.y = std::min({v1.y, v2.y, v3.y, v4.y});
-  out.max.x = std::max({v1.x, v2.x, v3.x, v4.x});
-  out.max.y = std::max({v1.y, v2.y, v3.y, v4.y});
+  out.min.x = position.x - mx;
+  out.min.y = position.y - my;
+  out.max.x = position.x + mx;
+  out.max.y = position.y + my;
 }

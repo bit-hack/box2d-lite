@@ -27,6 +27,10 @@ struct Body
 
   void GetAABB(aabb_t &out) const;
 
+  bool IsStatic() const {
+    return invMass == 0.f;
+  }
+
   Vec2 position;
   float rotation;
 

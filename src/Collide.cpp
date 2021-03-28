@@ -53,8 +53,8 @@ struct ClipVertex
 
 static void Flip(FeaturePair& fp)
 {
-  Swap(fp.e.inEdge1, fp.e.inEdge2);
-  Swap(fp.e.outEdge1, fp.e.outEdge2);
+  std::swap(fp.e.inEdge1, fp.e.inEdge2);
+  std::swap(fp.e.outEdge1, fp.e.outEdge2);
 }
 
 static int ClipSegmentToLine(ClipVertex vOut[2], ClipVertex vIn[2],
@@ -167,7 +167,8 @@ int Collide(Contact* contacts, Body* bodyA, Body* bodyB)
   const Vec2 posA = bodyA->position;
   const Vec2 posB = bodyB->position;
 
-  const Mat22 RotA(bodyA->rotation), RotB(bodyB->rotation);
+  const Mat22 RotA(bodyA->rotation);
+  const Mat22 RotB(bodyB->rotation);
 
   const Mat22 RotAT = RotA.Transpose();
   const Mat22 RotBT = RotB.Transpose();
@@ -313,7 +314,6 @@ int Collide(Contact* contacts, Body* bodyA, Body* bodyB)
   for (int i = 0; i < 2; ++i)
   {
     const float separation = Dot(frontNormal, clipPoints2[i].v) - front;
-
     if (separation <= 0)
     {
       contacts[numContacts].separation = separation;
