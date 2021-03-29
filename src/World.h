@@ -27,7 +27,8 @@ struct World
 {
   World(Vec2 gravity, int iterations)
     : gravity(gravity)
-    , iterations(iterations) {
+    , iterations(iterations)
+  {
     bvh.growth = 0.2f;
   }
 
@@ -50,6 +51,7 @@ struct World
 
   bvh_t bvh;
 
+  static bool useBVH;
   static bool accumulateImpulses;
   static bool warmStarting;
   static bool positionCorrection;

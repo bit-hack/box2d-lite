@@ -31,8 +31,13 @@ struct Body
     return invMass == 0.f;
   }
 
+  // OOBB
   Vec2 position;
   float rotation;
+  Vec2 width;
+
+  // index into the Bounding Volume Hierarchy
+  bvh_index_t bvh_index;
 
   Vec2 velocity;
   float angularVelocity;
@@ -40,13 +45,10 @@ struct Body
   Vec2 force;
   float torque;
 
-  Vec2 width;
-
   float friction;
-  float mass, invMass;
+  float mass;
+  float invMass;
   float I, invI;
-
-  bvh_index_t bvh_index;
 };
 
 }  // namespace b2dl

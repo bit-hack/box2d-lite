@@ -25,6 +25,7 @@ typedef pair<ArbiterKey, Arbiter> ArbPair;
 bool World::accumulateImpulses = true;
 bool World::warmStarting = true;
 bool World::positionCorrection = true;
+bool World::useBVH = true;
 
 void World::Add(Body* body)
 {
@@ -56,10 +57,9 @@ void World::NarrowPhase(Body* bi, Body *bj) {
     return;
 
   Arbiter newArb(bi, bj);
-
   ArbiterKey key(bi, bj);
 
-  // with no contacts 
+  // with no contacts
   if (newArb.numContacts <= 0)
   {
     arbiters.erase(key);
@@ -83,31 +83,27 @@ void World::BroadPhase()
   for (size_t i = 0; i < bodies.size(); ++i)
   {
     Body* bi = bodies[i];
+    if (useBVH) {
+      overlaps.clear();
+      if (bvh.find_overlaps(bi->bvh_index, overlaps)) {
+        for (bvh_index_t j : overlaps) {
+          Body *bj = (Body*)bvh.user_data(j);
 
-#if 1
-    // note: this does not remove old arbiters which we should do
-
-    overlaps.clear();
-    if (bvh.find_overlaps(bi->bvh_index, overlaps)) {
-
-      for (bvh_index_t j : overlaps) {
-        Body *bj = (Body*)bvh.user_data(j);
-
-        if (bi != bj) {
-          NarrowPhase(bi, bj);
+          if (bi != bj) {
+            NarrowPhase(bi, bj);
+          }
         }
       }
     }
-#else
-    // O(n^2) broad-phase
-    for (size_t j = i + 1; j < bodies.size(); ++j)
-    {
-      Body* bj = bodies[j];
-
-      // check for a collision between these two
-      NarrowPhase(bi, bj);
+    else {
+      // Original O(n^2) broad-phase
+      for (size_t j = i + 1; j < bodies.size(); ++j)
+      {
+        Body* bj = bodies[j];
+        // check for a collision between these two
+        NarrowPhase(bi, bj);
+      }
     }
-#endif
   }
 }
 
@@ -130,11 +126,17 @@ void World::Step(float dt)
   }
 
   // Perform pre-steps
-  for (auto &arb : arbiters)
+  for (auto itt = arbiters.begin(); itt != arbiters.end();)
   {
-    arb.second.PreStep(inv_dt);
+    if (!itt->second.stale) {
+      itt->second.PreStep(inv_dt);
+      itt->second.stale = true;
+      ++itt;
+    }
+    else {
+      itt = arbiters.erase(itt);
+    }
   }
-
   for (auto &joint : joints)
   {
     assert(joint);
@@ -148,8 +150,7 @@ void World::Step(float dt)
     {
       arb.second.ApplyImpulse();
     }
-
-    for (int j = 0; j < (int)joints.size(); ++j)
+    for (size_t j = 0; j < joints.size(); ++j)
     {
       joints[j]->ApplyImpulse();
     }

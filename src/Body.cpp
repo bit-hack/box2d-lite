@@ -18,11 +18,11 @@ using namespace b2dl;
 Body::Body()
   : position{ 0.f, 0.f }
   , rotation(0.f)
+  , width{ 1.f, 1.f }
   , velocity{0.f, 0.f}
   , angularVelocity(0.f)
   , force{ 0.f, 0.f }
   , torque(0.f)
-  , width{1.f, 1.f}
   , friction(0.2f)
   , mass(FLT_MAX)
   , invMass(0.f)

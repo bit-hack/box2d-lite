@@ -18,6 +18,7 @@ using namespace b2dl;
 Arbiter::Arbiter(Body* b1, Body* b2)
   : body1(b1 < b2 ? b1 : b2)
   , body2(b1 < b2 ? b2 : b1)
+  , stale(false)
 {
   numContacts = Collide(contacts.data(), body1, body2);
   friction = sqrtf(body1->friction * body2->friction);
@@ -25,6 +26,8 @@ Arbiter::Arbiter(Body* b1, Body* b2)
 
 void Arbiter::Update(Contact* newContacts, int numNewContacts)
 {
+  stale = false;
+
   std::array<Contact, 2> mergedContacts;
 
   for (int i = 0; i < numNewContacts; ++i)

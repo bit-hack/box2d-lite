@@ -68,6 +68,7 @@ struct Arbiter
   void Update(Contact* contacts, int numContacts);
 
   void PreStep(float inv_dt);
+
   void ApplyImpulse();
 
   Body* body1;
@@ -78,6 +79,9 @@ struct Arbiter
 
   // Combined friction
   float friction;
+
+  // true if the arbiter is stale and should be collected
+  bool stale;
 };
 
 // This is used by std::set

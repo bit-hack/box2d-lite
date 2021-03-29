@@ -29,7 +29,7 @@ namespace
 {
   GLFWwindow* mainWindow = nullptr;
 
-  std::array<b2dl::Body, 200> bodies;
+  std::array<b2dl::Body, 1000> bodies;
   std::array<b2dl::Joint, 100> joints;
 
   b2dl::Body* bomb = nullptr;
@@ -564,7 +564,40 @@ static void Demo9(b2dl::Body* b, b2dl::Joint* j)
   }
 }
 
-void(*demos[])(b2dl::Body* b, b2dl::Joint* j) = { Demo1, Demo2, Demo3, Demo4, Demo5, Demo6, Demo7, Demo8, Demo9 };
+static void Demo10(b2dl::Body* b, b2dl::Joint* j) {
+  using namespace b2dl;
+
+  b->Set(Vec2{ 100.0f, 20.0f }, FLT_MAX);
+  b->friction = 0.2f;
+  b->position.Set(0.0f, -0.5f * b->width.y);
+  b->rotation = 0.0f;
+  world.Add(b);
+  ++b; ++numBodies;
+
+  b2dl::Vec2 x{ -10.0f, 0.75f };
+  b2dl::Vec2 y;
+
+  for (int i = 0; i < 30; ++i)
+  {
+    y = x;
+
+    for (int j = 0; j < 30; ++j)
+    {
+      b->Set(b2dl::Vec2{ .5f, .5f }, 10.0f);
+      b->friction = 0.2f;
+      b->position = y;
+      world.Add(b);
+      ++b; ++numBodies;
+
+      y += b2dl::Vec2{ .75f, 0.0f };
+    }
+
+    x += b2dl::Vec2{ 0.f, 2.0f };
+  }
+}
+
+typedef void(*Demo)(b2dl::Body* b, b2dl::Joint* j);
+Demo demos[] = { Demo1, Demo2, Demo3, Demo4, Demo5, Demo6, Demo7, Demo8, Demo9, Demo10 };
 const char* demoStrings[] = {
   "Demo 1: A Single Box",
   "Demo 2: Simple Pendulum",
@@ -574,7 +607,9 @@ const char* demoStrings[] = {
   "Demo 6: A Teeter",
   "Demo 7: A Suspension Bridge",
   "Demo 8: Dominos",
-  "Demo 9: Multi-pendulum" };
+  "Demo 9: Multi-pendulum",
+  "Demo 10: Stress"
+};
 
 static void InitDemo(int index)
 {
@@ -614,6 +649,9 @@ static void Keyboard(GLFWwindow* window, int key, int scancode, int action, int 
   case '9':
     InitDemo(key - GLFW_KEY_1);
     break;
+  case '0':
+    InitDemo(9);
+    break;
 
   case GLFW_KEY_A:
     World::accumulateImpulses = !World::accumulateImpulses;
@@ -629,6 +667,10 @@ static void Keyboard(GLFWwindow* window, int key, int scancode, int action, int 
 
   case GLFW_KEY_D:
     drawBVH = !drawBVH;
+    break;
+
+  case GLFW_KEY_U:
+    World::useBVH = !World::useBVH;
     break;
 
   case GLFW_KEY_SPACE:
@@ -752,6 +794,9 @@ int main(int, char**)
 
     sprintf(buffer.data(), "(D)raw BVH %s", drawBVH ? "ON" : "OFF");
     DrawText(5, 155, buffer.data());
+
+    sprintf(buffer.data(), "(U)se BVH %s", World::useBVH ? "ON" : "OFF");
+    DrawText(5, 185, buffer.data());
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
