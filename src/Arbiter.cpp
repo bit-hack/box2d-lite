@@ -16,8 +16,13 @@
 using namespace b2dl;
 
 Arbiter::Arbiter(Body* b1, Body* b2)
-  : body1(b1 < b2 ? b1 : b2)
-  , body2(b1 < b2 ? b2 : b1)
+
+  // note: the contact data wont make sense if arbiters [body1,body2] are flipped around
+  // it will stop the Update() from working, thus the checks are needed
+  // see: https://github.com/erincatto/box2d-lite/issues/8
+
+  : body1(b1 > b2 ? b1 : b2)
+  , body2(b1 > b2 ? b2 : b1)
   , stale(false)
 {
   numContacts = Collide(contacts.data(), body1, body2);
@@ -49,8 +54,8 @@ void Arbiter::Update(Contact* newContacts, int numNewContacts)
       Contact &c = mergedContacts[i];
       Contact &cOld = contacts[k];
       c = cNew;
-      c.Pn = World::warmStarting ? cOld.Pn : 0.f;
-      c.Pt = World::warmStarting ? cOld.Pt : 0.f;
+      c.Pn  = World::warmStarting ? cOld.Pn  : 0.f;
+      c.Pt  = World::warmStarting ? cOld.Pt  : 0.f;
       c.Pnb = World::warmStarting ? cOld.Pnb : 0.f;
     }
     else

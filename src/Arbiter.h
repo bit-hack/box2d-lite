@@ -87,13 +87,8 @@ struct Arbiter
 // This is used by std::set
 inline bool operator < (const ArbiterKey& a1, const ArbiterKey& a2)
 {
-  if (a1.body1 < a2.body1)
-    return true;
-
-  if (a1.body1 == a2.body1 && a1.body2 < a2.body2)
-    return true;
-
-  return false;
+  if (a1.body1 != a2.body1) return a1.body1 < a2.body1;
+                            return a1.body2 < a2.body2;
 }
 
 int Collide(Contact* contacts, Body* body1, Body* body2);

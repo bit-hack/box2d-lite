@@ -53,16 +53,16 @@ void Joint::PreStep(float inv_dt)
   K1.col2.y = body1->invMass + body2->invMass;
 
   Mat22 K2;
-  K2.col1.x = body1->invI * r1.y * r1.y;
+  K2.col1.x =  body1->invI * r1.y * r1.y;
   K2.col2.x = -body1->invI * r1.x * r1.y;
   K2.col1.y = -body1->invI * r1.x * r1.y;
-  K2.col2.y = body1->invI * r1.x * r1.x;
+  K2.col2.y =  body1->invI * r1.x * r1.x;
 
   Mat22 K3;
-  K3.col1.x = body2->invI * r2.y * r2.y;
+  K3.col1.x =  body2->invI * r2.y * r2.y;
   K3.col2.x = -body2->invI * r2.x * r2.y;
   K3.col1.y = -body2->invI * r2.x * r2.y;
-  K3.col2.y = body2->invI * r2.x * r2.x;
+  K3.col2.y =  body2->invI * r2.x * r2.x;
 
   Mat22 K = K1 + K2 + K3;
   K.col1.x += softness;

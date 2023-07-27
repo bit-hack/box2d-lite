@@ -19,13 +19,13 @@ using std::vector;
 using std::map;
 using std::pair;
 
-typedef map<ArbiterKey, Arbiter>::iterator ArbIter;
+typedef map <ArbiterKey, Arbiter>::iterator ArbIter;
 typedef pair<ArbiterKey, Arbiter> ArbPair;
 
 bool World::accumulateImpulses = true;
-bool World::warmStarting = true;
+bool World::warmStarting       = true;
 bool World::positionCorrection = true;
-bool World::useBVH = true;
+bool World::useBVH             = true;
 
 void World::Add(Body* body)
 {
@@ -80,30 +80,44 @@ void World::NarrowPhase(Body* bi, Body *bj) {
 void World::BroadPhase()
 {
   bvh_vector_t overlaps;
-  for (size_t i = 0; i < bodies.size(); ++i)
-  {
-    Body* bi = bodies[i];
-    if (useBVH) {
-      overlaps.clear();
-      if (bvh.find_overlaps(bi->bvh_index, overlaps)) {
-        for (bvh_index_t j : overlaps) {
-          Body *bj = (Body*)bvh.user_data(j);
 
+  if (useBVH) {
+
+    // Bounding Volume Hierarchy broadphase
+
+    for (size_t i = 0; i < bodies.size(); ++i)
+    {
+      Body* bi = bodies[i];
+
+      overlaps.clear();
+      if (bvh.find_overlaps(bi->bvh_index, overlaps))
+      {
+        for (bvh_index_t j : overlaps)
+        {
+          Body* bj = (Body*)bvh.user_data(j);
           if (bi != bj) {
             NarrowPhase(bi, bj);
           }
         }
       }
     }
-    else {
-      // Original O(n^2) broad-phase
+
+  }
+  else {
+
+    // Original O(n^2) broad-phase
+
+    bvh_vector_t overlaps;
+    for (size_t i = 0; i < bodies.size(); ++i)
+    {
+      Body* bi = bodies[i];
       for (size_t j = i + 1; j < bodies.size(); ++j)
       {
         Body* bj = bodies[j];
-        // check for a collision between these two
         NarrowPhase(bi, bj);
       }
     }
+
   }
 }
 
